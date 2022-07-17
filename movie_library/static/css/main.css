@@ -159,6 +159,11 @@ body {
   text-transform: uppercase;
 }
 
+.nav__account {
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
 /* Sets the size of the icon (light/dark theme toggle) to be the same as the font size
     So that it takes up more or less the same amount of space as the links */
 .nav__icon {

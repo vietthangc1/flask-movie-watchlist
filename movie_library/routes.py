@@ -23,14 +23,12 @@ pages = Blueprint(
 
 @pages.route("/")
 def index():
-    movie_data.open()
-    user_data.open()
-    movie_ids = []
-    for user in user_data.nd:
-        if user['email'] == session.get('email'):
-            movie_ids = user['movies']
-            break
-    list_movie = [Movie(**movie) for movie in movie_data.nd if movie['_id'] in movie_ids]
+    user = list(current_app.db.User.find({"email": session.get("email")}))
+    if len(user) > 0:
+        movie_ids = list(current_app.db.User.find({"email": session.get("email")}))[0]["movies"]
+    else:
+        movie_ids = []
+    list_movie = [Movie(**movie) for movie in current_app.db.Movie.find({"_id": {"$in" : movie_ids}})]
     return render_template(
         "index.html",
         title="Movies Watchlist",
@@ -48,24 +46,8 @@ def add_movie():
             director = form.director.data,
             year = form.year.data
         )
-
-        movie_data.open()
-        movie_data.append(asdict(movie))
-        movie_data.commit()
-
-        user_data.open()
-        lst_user = user_data.nd
-        for i in range(len(lst_user)):
-            if lst_user[i]['email'] == session.get('email'):
-                current_user = lst_user[i]
-                break
-        current_user['movies'].append(movie._id)
-
-        del lst_user[i]
-        lst_user.append(current_user)
-        user_data.nd = lst_user
-        user_data.commit()
-
+        current_app.db.Movie.insert_one(asdict(movie))
+        current_app.db.User.update_one({"email": session.get("email")}, {"$push": {"movies": movie._id}})
 
         return redirect(url_for('pages.movie', _id = movie._id))
 
@@ -76,71 +58,32 @@ def add_movie():
 @pages.route("/movie/<string:_id>")
 @login_required
 def movie(_id):
-    movie_data.open()
-    list_movie = [movie for movie in movie_data.nd]
-    current_movie = None
-    for m in list_movie:
-        if m['_id'] == _id:
-            current_movie = m
-            break
+    current_movie = list(current_app.db.Movie.find({"_id": _id}))[0]
     movie = Movie(**current_movie)
     return render_template("movie_details.html", th_movie = movie)
 
 @pages.route("/movie/<string:_id>/rating/<int:rating>")
 @login_required
 def rating(_id, rating):
-    movie_data.open()
-    list_movie = [movie for movie in movie_data.nd]
-    current_movie = None
-    for i in range(len(list_movie)):
-        if list_movie[i]['_id'] == _id:
-            current_movie = list_movie[i]
-            break
-
-    current_movie['rating'] = rating
-    del list_movie[i]
-    list_movie.append(current_movie)
-    movie_data.nd = list_movie
-    movie_data.commit()
-
-    return redirect(url_for('pages.movie', _id = current_movie['_id']))
+    current_app.db.Movie.update_one({"_id": _id}, {"$set": {"rating": rating}})
+    return redirect(url_for('pages.movie', _id = _id))
 
 @pages.route("/movie/<string:_id>/watch_date/")
 @login_required
 def watch_date(_id):
-    movie_data.open()
-    list_movie = [movie for movie in movie_data.nd]
-    current_movie = None
-    for i in range(len(list_movie)):
-        if list_movie[i]['_id'] == _id:
-            current_movie = list_movie[i]
-            break
-
-    current_movie['last_watched'] = datetime.today().strftime("%b %d %Y")
-    del list_movie[i]
-    list_movie.append(current_movie)
-    movie_data.nd = list_movie
-    movie_data.commit()
-    
-    return redirect(url_for('pages.movie', _id = current_movie['_id']))
+    current_app.db.Movie.update_one({"_id": _id}, {"$set": {"last_watched": datetime.today().strftime("%b %d %Y")}})    
+    return redirect(url_for('pages.movie', _id = _id))
 
 @pages.route("/edit/<string:_id>/", methods = ["GET", "POST"])
 @login_required
 def edit_movie(_id):
-    movie_data.open()
-    list_movie = [movie for movie in movie_data.nd]
-    current_movie = None
-    for i in range(len(list_movie)):
-        if list_movie[i]['_id'] == _id:
-            current_movie = list_movie[i]
-            break
+    current_movie = list(current_app.db.Movie.find({"_id": _id}))[0]
     movie = Movie(**current_movie)
     form = ExtendedMovieForm(obj = movie)
 
 
     if form.validate_on_submit():
         movie = dict(
-            _id = movie._id,
             title = form.title.data,
             director = form.director.data,
             year = form.year.data,
@@ -151,12 +94,8 @@ def edit_movie(_id):
             video_link = form.video_link.data,
         )
 
-        del list_movie[i]
-        list_movie.append(movie)
-        movie_data.nd = list_movie
-        movie_data.commit()
-
-        return redirect(url_for('pages.movie', _id = movie['_id']))
+        current_app.db.Movie.update_one({"_id": _id}, {"$set": movie})
+        return redirect(url_for('pages.movie', _id = _id))
 
     return render_template("edit_movie.html",
     title=movie.title,
@@ -174,18 +113,14 @@ def register():
             email = form.email.data,
             password = pbkdf2_sha256.hash(form.password.data)
         )
-        user_data.open()
-        lst_email = [acc['email'] for acc in user_data.nd]
+
+        lst_email = [u['email'] for u in list(current_app.db.User.find({}, {"email": 1}))]
         if user.email in lst_email:
             flash("This email had been registerd already. Use another email!", "danger")
             return redirect("/register")
-        user_data.append(asdict(user))
-        user_data.commit()
-
+        current_app.db.User.insert_one(asdict(user))
         flash("Registered Successfully!", "success")
-
         return redirect("/login")
-
     return render_template('register.html', th_form = form, title="Register")
 
 @pages.route("/login", methods = ['GET','POST'])
@@ -200,11 +135,10 @@ def login():
             'password': form.password.data
         }
 
-        user_data.open()
-        lst_user = user_data.nd
-        for user in lst_user:
-            if user['email'] == login_dic['email'] and pbkdf2_sha256.verify(login_dic['password'], user['password']):
-                session['email'] = user['email']
+        user = list(current_app.db.User.find({"email": login_dic['email']}))
+        if len(user) > 0:
+            if pbkdf2_sha256.verify(login_dic['password'], user[0]['password']):
+                session['email'] = login_dic['email']
                 return redirect("/")
         flash("Wrong email or password!", "danger")
         return redirect("/login")
