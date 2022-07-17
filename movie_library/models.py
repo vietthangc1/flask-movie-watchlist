@@ -34,7 +34,12 @@ class User:
   _id: str
   email: str
   password: str
+  name: str
+  avatar: str
+  created_date: datetime
+  favorites: List[str] = field(default_factory=list)
   movies: List[str] = field(default_factory=list)
+  
 
 
 class Data:
