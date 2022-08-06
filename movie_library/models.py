@@ -1,15 +1,8 @@
 from dataclasses import dataclass, field
 from datetime import datetime, date
-import json, os
-from random import choice
 from typing import List
 from flask import (
-    Blueprint,
-    flash, 
     redirect, 
-    render_template, 
-    url_for, 
-    request, 
     session, 
     current_app,
     )
