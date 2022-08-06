@@ -11,7 +11,7 @@ from flask import (
     current_app,
     )
 from movie_library.forms import LoginForm, MovieForm, ExtendedMovieForm, RegisterForm
-from movie_library.models import Data, Movie, User, login_required, movie_data, user_data
+from movie_library.models import Movie, User, login_required
 from dataclasses import asdict
 from passlib.hash import pbkdf2_sha256
 import os 
@@ -113,7 +113,6 @@ def register():
             email = form.email.data,
             password = pbkdf2_sha256.hash(form.password.data)
         )
-
         lst_email = [u['email'] for u in list(current_app.db.User.find({}, {"email": 1}))]
         if user.email in lst_email:
             flash("This email had been registerd already. Use another email!", "danger")
@@ -134,7 +133,6 @@ def login():
             'email' : form.email.data,
             'password': form.password.data
         }
-
         user = list(current_app.db.User.find({"email": login_dic['email']}))
         if len(user) > 0:
             if pbkdf2_sha256.verify(login_dic['password'], user[0]['password']):

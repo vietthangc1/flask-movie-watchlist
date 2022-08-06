@@ -14,6 +14,9 @@ from flask import (
     current_app,
     )
 import functools
+from flask import (
+  current_app
+)
 
 @dataclass
 class Movie:
@@ -34,51 +37,14 @@ class User:
   _id: str
   email: str
   password: str
-  name: str
-  avatar: str
-  created_date: datetime
-  favorites: List[str] = field(default_factory=list)
   movies: List[str] = field(default_factory=list)
-  
-
-
-class Data:
-  def __init__(self, path):
-    self.path = path
-  
-  def open(self):
-    self.f = open(self.path, 'r', encoding='utf-8')
-    self.nd = json.load(self.f)
-    self.f.close()
-  
-  def append(self, dic):
-    self.nd.append(dic)
-
-  def delete(self, blog_id):
-    delete_blog = None
-    for blog in self.nd:
-      if blog['_id'] == blog_id:
-        delete_blog = blog
-        break
-    
-    self.nd.remove(delete_blog)
-  
-  def commit(self):
-    self.f = open(self.path, 'w', encoding='utf-8')
-    json.dump(self.nd, self.f)
-    self.f.close()
-
-movies_path = os.path.dirname(os.path.realpath(__file__)) + '/static/data/movies.json'
-users_path = os.path.dirname(os.path.realpath(__file__)) + '/static/data/users.json'
-movie_data = Data(movies_path)
-user_data = Data(users_path)
 
 def login_required(route):
     @functools.wraps(route)
     def route_wrapper(*args, **kwargs):
         _email = session.get("email")
-        user_data.open()
-        lst_email = [user['email'] for user in user_data.nd]
+        lst_user = list(current_app.db.User.find({}))
+        lst_email = [user['email'] for user in lst_user]
         print(_email)
         print(lst_email)
         if _email not in lst_email:
