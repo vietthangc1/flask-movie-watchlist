@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import datetime, date
+from datetime import datetime
 from typing import List
 from flask import (
     redirect, 
