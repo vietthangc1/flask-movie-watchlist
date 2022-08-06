@@ -1,3 +1,4 @@
+import email
 from flask_wtf import FlaskForm
 from wtforms import (
   IntegerField, 
@@ -6,7 +7,8 @@ from wtforms import (
   TextAreaField, 
   URLField, 
   EmailField,
-  PasswordField)
+  PasswordField,
+  DateTimeField)
 from wtforms.validators import InputRequired, NumberRange, Email, EqualTo, Length
 
 class MovieForm(FlaskForm):
@@ -57,3 +59,11 @@ class LoginForm(FlaskForm):
     Length(min=4)
   ])
   submit = SubmitField("Login")
+
+class UserForm(FlaskForm):
+  name = StringField("Name")
+  email = EmailField("Email", render_kw={'disabled': ''})
+  dob = DateTimeField("Date of Birth (YYYY-MM-DD)", format='%Y-%m-%d')
+  nationality = StringField("Nationality")
+  movies = StringListField("Movies", render_kw={'disabled': ''})
+  submit = SubmitField("Submit")

@@ -1,0 +1,25 @@
+{% from "macros/fields.html" import render_text_field, render_area_field %}
+{% extends "layout.html" %}
+
+{% block head_content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/forms.css') }}" />
+{% endblock %}
+
+{% block main_content %}
+<form action="{{ url_for('pages.profile') }}" class="form" novalidate method="post">
+  <div class="form__container">
+    {{ form.hidden_tag() }}
+    {{ render_text_field(form.name) }}
+    {{ render_text_field(form.email) }}
+    {{ render_text_field(form.dob) }}
+    {{ render_text_field(form.nationality) }}
+    
+    {{ render_area_field(form.movies) }}
+
+    <div>
+      {{ form.submit(class_="button button--form")}}
+    </div>
+  </div>
+</form>
+
+{% endblock %}

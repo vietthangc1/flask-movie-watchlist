@@ -21,7 +21,7 @@
 				<span class="nav__item">Register</span>
 			</a>
 			{% else %}
-			<a href="#"
+			<a href="{{ url_for('pages.profile') }}"
 				class="nav__link">
 				<span class="nav__account">Hi, {{ email }}</span>
 			</a>

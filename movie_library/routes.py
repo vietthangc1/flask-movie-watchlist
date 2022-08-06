@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 import uuid
 from flask import (
     Blueprint,
@@ -10,7 +10,7 @@ from flask import (
     session, 
     current_app,
     )
-from movie_library.forms import LoginForm, MovieForm, ExtendedMovieForm, RegisterForm
+from movie_library.forms import LoginForm, MovieForm, ExtendedMovieForm, RegisterForm, UserForm
 from movie_library.models import Movie, User, login_required
 from dataclasses import asdict
 from passlib.hash import pbkdf2_sha256
@@ -34,6 +34,33 @@ def index():
         title="Movies Watchlist",
         th_movie_data = list_movie
     )
+
+@pages.route("/profile", methods = ["GET", "POST"])
+@login_required
+def profile():
+    current_user = list(current_app.db.User.find({"email": session.get("email")}))[0]
+    _id = current_user['_id']
+    user = User(**current_user)
+    form = UserForm(obj = user)
+
+    if form.validate_on_submit():
+        user = dict(
+            name = form.name.data,
+            email = form.email.data,
+            dob = form.dob.data,
+            nationality = form.nationality.data,
+            movies = current_user['movies'],
+
+            password = current_user['password']
+        )
+
+        current_app.db.User.update_one({"_id": _id}, {"$set": user})
+        return redirect(url_for('pages.index'))
+
+    return render_template("edit_user.html",
+    title="My profile",
+    form = form)
+
 
 @pages.route("/add", methods = ["GET", "POST"])
 @login_required
@@ -80,7 +107,6 @@ def edit_movie(_id):
     current_movie = list(current_app.db.Movie.find({"_id": _id}))[0]
     movie = Movie(**current_movie)
     form = ExtendedMovieForm(obj = movie)
-
 
     if form.validate_on_submit():
         movie = dict(
