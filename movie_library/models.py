@@ -49,8 +49,6 @@ def login_required(route):
         _email = session.get("email")
         lst_user = list(current_app.db.User.find({}))
         lst_email = [user['email'] for user in lst_user]
-        print(_email)
-        print(lst_email)
         if _email not in lst_email:
             return redirect("/login")
         return route(*args, **kwargs)
