@@ -65,5 +65,17 @@ class UserForm(FlaskForm):
   email = EmailField("Email", render_kw={'disabled': ''})
   dob = DateTimeField("Date of Birth (YYYY-MM-DD)", format='%Y-%m-%d')
   nationality = StringField("Nationality")
-  movies = StringListField("Movies", render_kw={'disabled': ''})
+  movies_names = StringListField("Movies", render_kw={'disabled': ''})
+  submit = SubmitField("Submit")
+
+class PasswordForm(FlaskForm):
+  old = PasswordField("Current Password", validators=[InputRequired()])
+  new1 = PasswordField("New Password", validators=[
+    InputRequired(),
+    Length(min=4)
+  ])
+  new2 = PasswordField("Confirm New Password", validators=[
+    InputRequired(),
+    EqualTo("new1", message="New and Confirm New Password must be the same!")
+  ])
   submit = SubmitField("Submit")

@@ -10,7 +10,7 @@ from flask import (
     session, 
     current_app,
     )
-from movie_library.forms import LoginForm, MovieForm, ExtendedMovieForm, RegisterForm, UserForm
+from movie_library.forms import LoginForm, MovieForm, ExtendedMovieForm, PasswordForm, RegisterForm, UserForm
 from movie_library.models import Movie, User, login_required
 from dataclasses import asdict
 from passlib.hash import pbkdf2_sha256
@@ -42,11 +42,12 @@ def profile():
     _id = current_user['_id']
     user = User(**current_user)
     form = UserForm(obj = user)
-
+    lst_movies = list(current_app.db.Movie.find({"_id":{"$in": current_user['movies']}}))
+    lst_movie_names = [movie['title'] for movie in lst_movies]
+    form.movies_names.data = lst_movie_names
     if form.validate_on_submit():
         user = dict(
             name = form.name.data,
-            email = form.email.data,
             dob = form.dob.data,
             nationality = form.nationality.data,
             movies = current_user['movies'],
@@ -61,6 +62,31 @@ def profile():
     title="My profile",
     form = form)
 
+@pages.route("/change_password", methods = ["GET", "POST"])
+@login_required
+def change_password():
+    current_user = list(current_app.db.User.find({"email": session.get("email")}))[0]
+    _id = current_user['_id']
+    form = PasswordForm()
+
+    if form.validate_on_submit():
+        form_data = {
+            'old': form.old.data,
+            'new1': form.new1.data,
+            'new2': form.new2.data
+        }
+        print(form_data)
+        if pbkdf2_sha256.verify(form_data['old'], current_user['password']):
+            current_app.db.User.update_one({"_id": _id}, {"$set": {"password": pbkdf2_sha256.hash(form_data['new1'])}})
+            flash("Password changed.", "success")
+            return redirect(url_for('pages.index'))
+        else:
+            flash("Wrong current password. Try again!", "danger")
+            return redirect(url_for('pages.change_password'))
+
+    return render_template("edit_password.html",
+    title="Change password",
+    form = form)
 
 @pages.route("/add", methods = ["GET", "POST"])
 @login_required

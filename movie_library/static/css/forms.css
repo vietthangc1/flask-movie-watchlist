@@ -91,7 +91,7 @@
 
 .form__error,
 .form__flash--danger {
-  background: var(--accent-colour);
+  background: red;
 }
 
 .form__flash {
