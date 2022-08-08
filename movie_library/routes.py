@@ -23,6 +23,7 @@ pages = Blueprint(
     "pages", __name__, template_folder="templates", static_folder="static"
 )
 
+## Homepage (show list movie)
 @pages.route("/")
 def index():
     user = session.get("current_user")
@@ -37,6 +38,7 @@ def index():
         th_movie_data = list_movie
     )
 
+## Account (show and edit profile, password)
 @pages.route("/profile", methods = ["GET", "POST"])
 @login_required
 def profile():
@@ -89,6 +91,7 @@ def change_password():
     title="Change password",
     form = form)
 
+## Add movie
 @pages.route("/add", methods = ["GET", "POST"])
 @login_required
 def add_movie():
@@ -109,6 +112,7 @@ def add_movie():
     title="Add movie",
     form = form)
 
+## Show movie, edit movie information
 @pages.route("/movie/<string:_id>")
 @login_required
 def movie(_id):
@@ -155,6 +159,7 @@ def edit_movie(_id):
     th_movie = movie,
     form = form)
 
+## Register and Login/Logout account
 @pages.route("/register", methods = ['GET','POST'])
 def register():
     if session.get("email"):
@@ -201,6 +206,7 @@ def logout():
     session['email'] = None
     return redirect("/")
 
+# Switch light/dark mode
 @pages.route("/toggle-theme")
 def toggle_theme():
     current_theme = session.get("theme")
