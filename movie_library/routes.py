@@ -14,7 +14,9 @@ from movie_library.forms import LoginForm, MovieForm, ExtendedMovieForm, Passwor
 from movie_library.models import Movie, User, login_required
 from dataclasses import asdict
 from passlib.hash import pbkdf2_sha256
-import os 
+import os
+
+from movie_library.modules import save_user_to_session 
 
 
 pages = Blueprint(
@@ -23,9 +25,9 @@ pages = Blueprint(
 
 @pages.route("/")
 def index():
-    user = list(current_app.db.User.find({"email": session.get("email")}))
-    if len(user) > 0:
-        movie_ids = list(current_app.db.User.find({"email": session.get("email")}))[0]["movies"]
+    user = session.get("current_user")
+    if user != None:
+        movie_ids = user['movies']
     else:
         movie_ids = []
     list_movie = [Movie(**movie) for movie in current_app.db.Movie.find({"_id": {"$in" : movie_ids}})]
@@ -38,11 +40,12 @@ def index():
 @pages.route("/profile", methods = ["GET", "POST"])
 @login_required
 def profile():
-    current_user = list(current_app.db.User.find({"email": session.get("email")}))[0]
+    current_user = session.get("current_user")
     _id = current_user['_id']
-    user = User(**current_user)
-    form = UserForm(obj = user)
-    lst_movies = list(current_app.db.Movie.find({"_id":{"$in": current_user['movies']}}))
+    print("----", _id)
+    form = UserForm(obj = User(**current_user))
+
+    lst_movies = list(current_app.db.Movie.find({"_id":{"$in": current_user['movies']}}).sort({"title":1}))
     lst_movie_names = [movie['title'] for movie in lst_movies]
     form.movies_names.data = lst_movie_names
     if form.validate_on_submit():
@@ -50,12 +53,9 @@ def profile():
             name = form.name.data,
             dob = form.dob.data,
             nationality = form.nationality.data,
-            movies = current_user['movies'],
-
-            password = current_user['password']
         )
-
         current_app.db.User.update_one({"_id": _id}, {"$set": user})
+        save_user_to_session()
         return redirect(url_for('pages.index'))
 
     return render_template("edit_user.html",
@@ -65,7 +65,7 @@ def profile():
 @pages.route("/change_password", methods = ["GET", "POST"])
 @login_required
 def change_password():
-    current_user = list(current_app.db.User.find({"email": session.get("email")}))[0]
+    current_user = session.get("current_user")
     _id = current_user['_id']
     form = PasswordForm()
 
@@ -78,6 +78,7 @@ def change_password():
         print(form_data)
         if pbkdf2_sha256.verify(form_data['old'], current_user['password']):
             current_app.db.User.update_one({"_id": _id}, {"$set": {"password": pbkdf2_sha256.hash(form_data['new1'])}})
+            save_user_to_session()
             flash("Password changed.", "success")
             return redirect(url_for('pages.index'))
         else:
@@ -101,7 +102,7 @@ def add_movie():
         )
         current_app.db.Movie.insert_one(asdict(movie))
         current_app.db.User.update_one({"email": session.get("email")}, {"$push": {"movies": movie._id}})
-
+        save_user_to_session()
         return redirect(url_for('pages.movie', _id = movie._id))
 
     return render_template("new_movie.html",
@@ -189,6 +190,7 @@ def login():
         if len(user) > 0:
             if pbkdf2_sha256.verify(login_dic['password'], user[0]['password']):
                 session['email'] = login_dic['email']
+                save_user_to_session()
                 return redirect("/")
         flash("Wrong email or password!", "danger")
         return redirect("/login")
