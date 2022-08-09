@@ -27,13 +27,13 @@ class Movie:
 
 @dataclass
 class User:
-  _id: str
-  email: str
-  password: str
-  movies: List[str] = field(default_factory=list)
-  name: str = None
-  dob: datetime = None
-  nationality: str = None
+    _id: str
+    email: str
+    password: str
+    movies: List[str] = field(default_factory=list)
+    name: str = None
+    dob: datetime = None
+    nationality: str = None
 
 
 def login_required(route):

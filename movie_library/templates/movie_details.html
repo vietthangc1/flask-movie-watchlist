@@ -30,7 +30,13 @@
                 {% else %}
                     <p><a href="{{ url_for('pages.watch_date', _id = th_movie._id) }}" class="watched__link">Not watched yet</a></p>
                 {% endif %}
+
+                {% if th_check %}
                 <a class="movie__edit" href="{{ url_for('pages.edit_movie', _id = th_movie._id) }}">Edit {{ pencil("pencil") }}</a>
+                {% else %}
+                <p class="prohibit_message"></p>
+                <a class="movie__edit movie__edit_prohibit" href="#">Edit {{ pencil("pencil") }}</a>
+                {% endif %}
             </div>
         </div>
         <div class="header__row">
@@ -82,4 +88,13 @@
   </div>
 {% endif %}
 </div>
+
+<script>
+    document.getElementsByClassName("movie__edit_prohibit")[0].addEventListener("mouseover", function() {
+        document.getElementsByClassName("prohibit_message")[0].innerHTML = "Cannot edit due to lack of ownership!";
+    });   
+    document.getElementsByClassName("movie__edit_prohibit")[0].addEventListener("mouseout", function() {
+        document.getElementsByClassName("prohibit_message")[0].innerHTML = "";
+    });   
+</script>
 {% endblock %}

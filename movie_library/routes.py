@@ -16,7 +16,7 @@ from dataclasses import asdict
 from passlib.hash import pbkdf2_sha256
 import os
 
-from movie_library.modules import save_user_to_session 
+from movie_library.modules import check_movie_belong_to_current_user, save_user_to_session 
 
 
 pages = Blueprint(
@@ -44,10 +44,9 @@ def index():
 def profile():
     current_user = session.get("current_user")
     _id = current_user['_id']
-    print("----", _id)
     form = UserForm(obj = User(**current_user))
 
-    lst_movies = list(current_app.db.Movie.find({"_id":{"$in": current_user['movies']}}).sort({"title":1}))
+    lst_movies = list(current_app.db.Movie.find({"_id":{"$in": current_user['movies']}}))
     lst_movie_names = [movie['title'] for movie in lst_movies]
     form.movies_names.data = lst_movie_names
     if form.validate_on_submit():
@@ -77,7 +76,6 @@ def change_password():
             'new1': form.new1.data,
             'new2': form.new2.data
         }
-        print(form_data)
         if pbkdf2_sha256.verify(form_data['old'], current_user['password']):
             current_app.db.User.update_one({"_id": _id}, {"$set": {"password": pbkdf2_sha256.hash(form_data['new1'])}})
             save_user_to_session()
@@ -116,25 +114,36 @@ def add_movie():
 @pages.route("/movie/<string:_id>")
 @login_required
 def movie(_id):
+    check = check_movie_belong_to_current_user(_id)
     current_movie = list(current_app.db.Movie.find({"_id": _id}))[0]
     movie = Movie(**current_movie)
-    return render_template("movie_details.html", th_movie = movie)
+    return render_template("movie_details.html", th_movie = movie, th_check = check)
 
 @pages.route("/movie/<string:_id>/rating/<int:rating>")
 @login_required
 def rating(_id, rating):
+    check = check_movie_belong_to_current_user(_id)
+    if not check:
+        return redirect(url_for('pages.movie', _id = _id))
     current_app.db.Movie.update_one({"_id": _id}, {"$set": {"rating": rating}})
     return redirect(url_for('pages.movie', _id = _id))
 
 @pages.route("/movie/<string:_id>/watch_date/")
 @login_required
 def watch_date(_id):
+    check = check_movie_belong_to_current_user(_id)
+    if not check:
+        return redirect(url_for('pages.movie', _id = _id))
     current_app.db.Movie.update_one({"_id": _id}, {"$set": {"last_watched": datetime.today().strftime("%b %d %Y")}})    
     return redirect(url_for('pages.movie', _id = _id))
 
 @pages.route("/edit/<string:_id>/", methods = ["GET", "POST"])
 @login_required
 def edit_movie(_id):
+    check = check_movie_belong_to_current_user(_id)
+    if not check:
+        return redirect(url_for('pages.movie', _id = _id))
+
     current_movie = list(current_app.db.Movie.find({"_id": _id}))[0]
     movie = Movie(**current_movie)
     form = ExtendedMovieForm(obj = movie)
@@ -196,14 +205,14 @@ def login():
             if pbkdf2_sha256.verify(login_dic['password'], user[0]['password']):
                 session['email'] = login_dic['email']
                 save_user_to_session()
-                return redirect("/")
+                return redirect(request.path)
         flash("Wrong email or password!", "danger")
-        return redirect("/login")
     return render_template('login.html', th_form = form, title="Log in")
 
 @pages.route("/logout")
 def logout():
     session['email'] = None
+    session['current_user'] = None
     return redirect("/")
 
 # Switch light/dark mode
