@@ -117,7 +117,14 @@ def movie(_id):
     check = check_movie_belong_to_current_user(_id)
     current_movie = list(current_app.db.Movie.find({"_id": _id}))[0]
     movie = Movie(**current_movie)
-    return render_template("movie_details.html", th_movie = movie, th_check = check)
+    link_qr = "https://thang-pham-multi-purpose-app.herokuapp.com/movie/"+_id
+    return render_template(
+        "movie_details.html", 
+        title = movie.title,
+        th_movie = movie, 
+        th_check = check, 
+        th_link_qr = link_qr
+    )
 
 @pages.route("/movie/<string:_id>/rating/<int:rating>")
 @login_required

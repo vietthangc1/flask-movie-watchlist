@@ -3,6 +3,8 @@
 {% extends "layout.html" %}
 
 {%- block head_content %}
+    <meta property="og:url"           content="{{ th_link_qr }}" />
+    <meta property="og:title"         content="{{ title }}" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/movie_details.css') }}" />
 {% endblock %}
 
@@ -57,12 +59,13 @@
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowfullscreen>
     </iframe>
+    {% endif %}
 
     {% if th_movie.description %}
     <p class="movie__description">{{ th_movie.description }}</p>
-{% else %}
+    {% else %}
     <p class="movie__description">No description yet. <a class="link" href="#">Add one?</a></p>
-{% endif %}
+    {% endif %}
 
   <div class="movie__meta">
       {% if th_movie.cast %}
@@ -86,12 +89,47 @@
           </div>
       {% endif %}
   </div>
-{% endif %}
+
+  <div class="movie__qr">
+    <p class="movie__qr_share">Share movie QR code to your friend!</p>
+    <img 
+    src="{{ qrcode(th_link_qr) }}" 
+    alt="Your movie qr code" 
+    class = "qr__img">
+    {% set email_split = session.get('email').split('@') %}
+    <a href="{{ qrcode(th_link_qr) }}" download="{{th_movie.title|slugify + '-' + email_split[0]}}.jpg" class="button button--share">Download QR</a>
+
+    <div id="fb-root"></div>
+    <script async defer 
+    crossorigin="anonymous" 
+    src="https://connect.facebook.net/vi_VN/sdk.js#xfbml=1&version=v14.0" 
+    nonce="NvKB0rkm">
+    </script>
+    
+    <div class="fb-share-button" 
+    data-href="{{th_link_qr}}" 
+    data-layout="button" data-size="large">
+        <a target="_blank" 
+        href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&amp;src=sdkpreparse" 
+        class="fb-xfbml-parse-ignore">Share
+        </a>
+    </div>
+  </div>
 </div>
 
 <script>
     document.getElementsByClassName("movie__edit_prohibit")[0].addEventListener("click", function() {
         alert("Cannot edit due to lack of ownership!");
     });   
+
+    (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v3.0";
+    fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+
+
 </script>
 {% endblock %}
