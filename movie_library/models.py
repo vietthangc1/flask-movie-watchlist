@@ -5,6 +5,7 @@ from flask import (
     redirect, 
     session, 
     current_app,
+    request
     )
 import functools
 from flask import (
@@ -43,6 +44,7 @@ def login_required(route):
         lst_user = list(current_app.db.User.find({}))
         lst_email = [user['email'] for user in lst_user]
         if _email not in lst_email:
+            session['url_bf_login'] = request.path
             return redirect("/login")
         return route(*args, **kwargs)
     return route_wrapper

@@ -90,11 +90,8 @@
 </div>
 
 <script>
-    document.getElementsByClassName("movie__edit_prohibit")[0].addEventListener("mouseover", function() {
-        document.getElementsByClassName("prohibit_message")[0].innerHTML = "Cannot edit due to lack of ownership!";
-    });   
-    document.getElementsByClassName("movie__edit_prohibit")[0].addEventListener("mouseout", function() {
-        document.getElementsByClassName("prohibit_message")[0].innerHTML = "";
+    document.getElementsByClassName("movie__edit_prohibit")[0].addEventListener("click", function() {
+        alert("Cannot edit due to lack of ownership!");
     });   
 </script>
 {% endblock %}

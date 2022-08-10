@@ -192,6 +192,10 @@ def register():
 @pages.route("/login", methods = ['GET','POST'])
 def login():
     if session.get("email"):
+        if session.get("url_bf_login") != None:
+            url = session.get("url_bf_login")
+            session["url_bf_login"] = None
+            return redirect(url)
         return redirect("/")
 
     form = LoginForm()
