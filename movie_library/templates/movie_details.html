@@ -97,7 +97,7 @@
     alt="Your movie qr code" 
     class = "qr__img">
     {% set email_split = session.get('email').split('@') %}
-    <a href="{{ qrcode(th_link_qr) }}" download="{{th_movie.title|slugify + '-' + email_split[0]}}.jpg" class="button button--share">Download QR</a>
+    <a href="{{ qrcode(th_link_qr) }}" download="{{th_slugified_title + '-' + email_split[0]}}.jpg" class="button button--share">Download QR</a>
 
     <div id="fb-root"></div>
     <script async defer 

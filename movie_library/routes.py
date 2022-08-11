@@ -12,12 +12,11 @@ from flask import (
     )
 from movie_library.forms import LoginForm, MovieForm, ExtendedMovieForm, PasswordForm, RegisterForm, UserForm
 from movie_library.models import Movie, User, login_required
-from dataclasses import asdict
-from passlib.hash import pbkdf2_sha256
-import os
-
 from movie_library.modules import check_movie_belong_to_current_user, save_user_to_session 
 
+from dataclasses import asdict
+from passlib.hash import pbkdf2_sha256
+from slugify import slugify
 
 pages = Blueprint(
     "pages", __name__, template_folder="templates", static_folder="static"
@@ -118,12 +117,14 @@ def movie(_id):
     current_movie = list(current_app.db.Movie.find({"_id": _id}))[0]
     movie = Movie(**current_movie)
     link_qr = "https://thang-pham-multi-purpose-app.herokuapp.com/movie/"+_id
+    slugified_title = slugify(movie.title)
     return render_template(
         "movie_details.html", 
         title = movie.title,
         th_movie = movie, 
         th_check = check, 
-        th_link_qr = link_qr
+        th_link_qr = link_qr,
+        th_slugified_title = slugified_title
     )
 
 @pages.route("/movie/<string:_id>/rating/<int:rating>")
