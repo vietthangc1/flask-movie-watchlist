@@ -70,12 +70,14 @@ def profile():
         current_app.db.User.update_one({"_id": _id}, {"$set": user})
         save_user_to_session()
 
-        
+        f = form.avatar_file.data
+        if f == None:
+            return redirect(url_for('pages.index'))
+
         if current_avatar != "":
             print(avatar_path + current_avatar)
             os.remove(avatar_path + current_avatar)
-        
-        f = form.avatar_file.data
+            
         filename = secure_filename("ava" + _id + "." + f.filename.split(".")[-1])
         f.save(avatar_path+filename)
         return redirect(url_for('pages.index'))
