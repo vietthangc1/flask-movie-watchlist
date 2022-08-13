@@ -17,6 +17,9 @@ from movie_library.modules import check_movie_belong_to_current_user, save_user_
 from dataclasses import asdict
 from passlib.hash import pbkdf2_sha256
 from slugify import slugify
+from werkzeug.utils import secure_filename
+import os 
+
 
 pages = Blueprint(
     "pages", __name__, template_folder="templates", static_folder="static"
@@ -48,6 +51,16 @@ def profile():
     lst_movies = list(current_app.db.Movie.find({"_id":{"$in": current_user['movies']}}))
     lst_movie_names = [movie['title'] for movie in lst_movies]
     form.movies_names.data = lst_movie_names
+    
+    avatar_path = os.path.dirname(os.path.realpath(__file__))+"/static/img/avatar/"
+    lst_img = [f for f in os.listdir(avatar_path) if os.path.isfile(os.path.join(avatar_path, f))]
+        
+    current_avatar = ""
+    for img in lst_img:
+        if _id in img:
+            current_avatar = img
+            break
+
     if form.validate_on_submit():
         user = dict(
             name = form.name.data,
@@ -56,11 +69,21 @@ def profile():
         )
         current_app.db.User.update_one({"_id": _id}, {"$set": user})
         save_user_to_session()
+
+        
+        if current_avatar != "":
+            print(avatar_path + current_avatar)
+            os.remove(avatar_path + current_avatar)
+        
+        f = form.avatar_file.data
+        filename = secure_filename("ava" + _id + "." + f.filename.split(".")[-1])
+        f.save(avatar_path+filename)
         return redirect(url_for('pages.index'))
 
     return render_template("edit_user.html",
     title="My profile",
-    form = form)
+    form = form,
+    th_current_avatar = current_avatar)
 
 @pages.route("/change_password", methods = ["GET", "POST"])
 @login_required

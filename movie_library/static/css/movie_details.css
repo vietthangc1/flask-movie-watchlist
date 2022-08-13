@@ -87,6 +87,7 @@
 .movie__meta {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
+  padding: auto, 2rem
 }
 
 .list__item {

@@ -1,5 +1,5 @@
 import email
-from flask_wtf import FlaskForm
+from flask_wtf import FlaskForm, RecaptchaField
 from wtforms import (
   IntegerField, 
   StringField, 
@@ -8,8 +8,10 @@ from wtforms import (
   URLField, 
   EmailField,
   PasswordField,
-  DateTimeField)
+  DateTimeField
+  )
 from wtforms.validators import InputRequired, NumberRange, Email, EqualTo, Length
+from flask_wtf.file import FileField, FileAllowed
 
 class MovieForm(FlaskForm):
   title = StringField("Title", validators=[InputRequired()])
@@ -66,6 +68,7 @@ class UserForm(FlaskForm):
   dob = DateTimeField("Date of Birth (YYYY-MM-DD)", format='%Y-%m-%d')
   nationality = StringField("Nationality")
   movies_names = StringListField("Movies", render_kw={'disabled': ''})
+  avatar_file = FileField("Profile photo", validators=[FileAllowed(['jpg', 'png'], 'Images only!')])
   submit = SubmitField("Submit")
 
 class PasswordForm(FlaskForm):

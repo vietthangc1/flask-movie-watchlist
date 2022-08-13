@@ -6,9 +6,11 @@
 {% endblock %}
 
 {% block main_content %}
-<form action="{{ url_for('pages.profile') }}" class="form" novalidate method="post">
+<form action="{{ url_for('pages.profile') }}" enctype="multipart/form-data" class="form" novalidate method="post">
   <div class="form__container">
+    <img class="profile_avatar" src="{{ url_for('static', filename='img/avatar/'+th_current_avatar) }}" alt="You do not have an avatar yet!">
     {{ form.hidden_tag() }}
+    {{ render_text_field(form.avatar_file) }}
     {{ render_text_field(form.name) }}
     {{ render_text_field(form.email) }}
     {{ render_text_field(form.dob) }}
